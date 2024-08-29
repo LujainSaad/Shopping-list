@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shopping_list/data/categories.dart';
 import 'package:shopping_list/models/category.dart';
+import 'package:shopping_list/models/grocery_item.dart';
 
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
@@ -22,12 +23,19 @@ class _NewItemState extends State<NewItem> {
   var _enteredQuantity = 1;
   var _selectedCategory = categories[Categories.vegetables]!;
 
+  // ...
+  var _isSending = false;
+
   // Function to save the item when the form is submitted
   void _saveItem() async {
     // Validate the form fields
     if (_formKey.currentState!.validate()) {
       // Save the form fields
       _formKey.currentState!.save();
+
+      setState(() {
+        _isSending = true;
+      });
 
       // HTTP
       final url = Uri.https('shoppinglist-15fe2-default-rtdb.firebaseio.com',
@@ -44,18 +52,17 @@ class _NewItemState extends State<NewItem> {
         ),
       );
 
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
+      final Map<String, dynamic> resData = json.decode(response.body);
 
-      // Pop the screen and return the new GroceryItem
-      // Navigator.of(context).pop(
-      //   GroceryItem(
-      //     id: DateTime.now().toString(),
-      //     name: _enteredName,
-      //     quantity: _enteredQuantity,
-      //     category: _selectedCategory,
-      //   ),
-      // );
+      if (!context.mounted) return;
+      Navigator.of(context).pop(
+        GroceryItem(
+          id: resData['name'],
+          name: _enteredName,
+          quantity: _enteredQuantity,
+          category: _selectedCategory,
+        ),
+      );
     }
   }
 
@@ -216,26 +223,33 @@ class _NewItemState extends State<NewItem> {
                 children: [
                   // Reset button to clear the form
                   TextButton(
-                    onPressed: () {
-                      _formKey.currentState!.reset();
-                    },
+                    onPressed: _isSending
+                        ? null
+                        : () {
+                            _formKey.currentState!.reset();
+                          },
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.pinkAccent, // Text color to pink
+                      foregroundColor: Colors.pinkAccent,
                     ),
                     child: const Text('Reset'),
                   ),
                   // Button to save the item
                   ElevatedButton(
-                    onPressed: _saveItem,
+                    onPressed: _isSending ? null : _saveItem,
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white,
-                      backgroundColor: Colors
-                          .pinkAccent, // Pink background color for the button
+                      backgroundColor: Colors.pinkAccent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
                     ),
-                    child: const Text('Add Item'),
+                    child: _isSending
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(),
+                          )
+                        : const Text('Add Item'),
                   ),
                 ],
               ),
