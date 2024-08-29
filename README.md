@@ -11,7 +11,6 @@ A simple Flutter application for creating and managing shopping lists. This proj
 
 - Add items to the shopping list
 - Remove items from the list
-- Mark items as bought
 - Simple and clean user interface
 
 ## Getting Started
